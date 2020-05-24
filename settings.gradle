@@ -1,2 +1,3 @@
 rootProject.name = 'dev-java-lib'
+include 'dev-java-common'
 

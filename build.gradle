@@ -1,3 +1,54 @@
-group 'org.example'
-version '1.0-SNAPSHOT'
 
+buildscript {
+    ext {
+        set('springBootVersion', '2.2.6.RELEASE')
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+subprojects {
+
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'java'
+
+    configurations {
+        developmentOnly
+        runtimeClasspath {
+            extendsFrom developmentOnly
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'com.fasterxml.jackson.core:jackson-databind'
+        implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+        implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+        implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names'
+        implementation 'ch.qos.logback:logback-classic'
+        implementation 'org.apache.logging.log4j:log4j-to-slf4j'
+        implementation 'org.slf4j:jul-to-slf4j'
+        implementation 'com.jayway.jsonpath:json-path'
+
+        runtimeOnly 'mysql:mysql-connector-java'
+
+        testImplementation 'org.assertj:assertj-core'
+        testImplementation 'org.hamcrest:hamcrest'
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testImplementation 'org.mockito:mockito-core'
+        testImplementation 'org.mockito:mockito-junit-jupiter'
+        testImplementation 'org.skyscreamer:jsonassert'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+}
