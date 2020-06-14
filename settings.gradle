@@ -1,4 +1,5 @@
 rootProject.name = 'dev-java-lib'
 include 'dev-java-common'
 include 'dev-spring-common'
+include 'dev-json-common'
 

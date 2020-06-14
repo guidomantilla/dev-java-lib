@@ -1,0 +1,19 @@
+group 'co.guidomantillatarazona'
+version '1.0-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+ext {
+    set('springBootVersion', "2.3.0.RELEASE")
+    set('jacksonVersion', "2.11.0")
+    set('jsonSchemaVersion', "1.5.1")
+    set('jsonPathVersion', "2.4.0")
+}
+
+dependencies {
+    implementation "com.jayway.jsonpath:json-path:${jsonPathVersion}"
+    implementation "org.everit.json:org.everit.json.schema:${jsonSchemaVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonVersion}"
+}

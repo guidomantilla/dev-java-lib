@@ -1,0 +1,1002 @@
+{
+    "metadata": {
+        "version": "SRU2019-8.1.6u1",
+        "date": "2020-06-04T14:43:05-0500"
+    },
+    "data": {
+        "ecaActions": [
+            {
+                "name": "MATCH MESSAGE",
+                "actionType": "MATCHING",
+                "description": "Applies the matching rules on the message",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "UNMATCHED",
+                        "event": "SWIFT_MESSAGE_UNMATCHED",
+                        "exitWorkflow": false
+                    },
+                    {
+                        "resultKey": "ERROR", 
+                        "status": "ERROR",
+                        "statusComment": "Error matching message",
+                        "exitWorkflow": false
+                    },
+                    {
+                        "resultKey": "MISMATCHED",
+                        "event": "SWIFT_MESSAGE_MISMATCHED",
+                        "relatedEvent": "SWIFT_MESSAGE_MISMATCHED",
+                        "exitWorkflow": false
+                    },
+                    {
+                        "resultKey": "MATCHED",
+                        "event": "SWIFT_MESSAGE_MATCHED",
+                        "relatedEvent": "SWIFT_MESSAGE_MATCHED",
+                        "exitWorkflow": false
+                    }
+                ]
+            },
+            {
+                "name": "CHAIN MESSAGE",
+                "actionType": "CHAINING",
+                "description": "Applies the chaining rules on the message",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "ERROR",
+                        "status": "ERROR",
+                        "statusComment": "Error chaining message",
+                        "exitWorkflow": false
+                    }
+                ]
+            },
+            {
+                "name": "VALIDATE MESSAGE",
+                "actionType": "VALIDATION",
+                "description": "Checks if the message is SWIFT standard compliant",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "VALID",
+                        "status": "APPROVED",
+                        "statusComment": "Message validated OK",
+                        "exitWorkflow": false
+                    },
+                    {
+                        "resultKey": "INVALID",
+                        "status": "RETURNED",
+                        "statusComment": "Message with validation errors",
+                        "exitWorkflow": true
+                    },
+                    {
+                        "resultKey": "ERROR",
+                        "status": "ERROR",
+                        "statusComment": "Error validating message",
+                        "exitWorkflow": true
+                    }
+                ]
+            },
+            {
+                "name": "DUPLICATES CHECK",
+                "actionType": "DUPLICATES",
+                "description": "Prevents processing a duplicated message",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "DUPLICATE",
+                        "status": "DUPLICATE",
+                        "statusComment": "Message is a duplicate",
+                        "exitWorkflow": true
+                    },
+                    {
+                        "resultKey": "ERROR",
+                        "status": "ERROR",
+                        "statusComment": "Error checking message duplicates",
+                        "exitWorkflow": true
+                    }
+                ]
+            },
+            {
+                "name": "SEND MESSAGE",
+                "actionType": "DISPATCHER",
+                "description": "Sends the message to the EMISSION queue",
+                "parameters": {
+                    "TARGET": "AFT",
+                    "IDENTIFIER": "EMISSION"
+                },
+                "postProcesses": [
+                    {
+                        "resultKey": "SENT",
+                        "status": "WAITING_ACK",
+                        "statusComment": "Message sent to configuration ${IDENTIFIER} via ${TARGET}",
+                        "exitWorkflow": false
+                    },
+                    {
+                        "resultKey": "ERROR",
+                        "status": "ERROR",
+                        "statusComment": "Error sending message to configuration ${IDENTIFIER} via ${TARGET}",
+                        "exitWorkflow": true
+                    }
+                ]
+            },
+            {
+                "name": "REQUEST AUTHORIZATION",
+                "actionType": "SIMPLE",
+                "description": "Changes the message status to waiting for approval",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "PROCESSED",
+                        "status": "WAITING_AUTHORIZATION",
+                        "statusComment": "Message requires user authorization",
+                        "exitWorkflow": false
+                    }
+                ]
+            },
+            {
+                "name": "FORWARD AS AUTHORIZED",
+                "actionType": "SIMPLE",
+                "description": "Marks the message as authorized by the system, and fires a message authorized event",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "PROCESSED",
+                        "event": "SWIFT_MESSAGE_AUTHORIZED",
+                        "exitWorkflow": false
+                    }
+                ]
+            },
+            {
+                "name": "FORWARD AS CREATED",
+                "actionType": "SIMPLE",
+                "description": "Fires a created message event",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "PROCESSED",
+                        "event": "SWIFT_MESSAGE_CREATED",
+                        "exitWorkflow": false
+                    }
+                ]
+            },
+            {
+                "name": "PROCESS RECEIVED",
+                "actionType": "SIMPLE",
+                "description": "Sets status to processed",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "PROCESSED",
+                        "status": "PROCESSED",
+                        "statusComment": "Reception process completed",
+                        "exitWorkflow": false
+                    }
+                ]
+            },
+            {
+                "name": "PROCESS SENT ACTION",
+                "actionType": "SIMPLE",
+                "description": "Sets status to delivered",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "PROCESSED",
+                        "status": "WAITING_ACK",
+                        "statusComment": "Outgoing message loaded, waiting for ACK",
+                        "exitWorkflow": false
+                    }
+                ]
+            },
+            {
+                "name": "ABORT MESSAGE",
+                "actionType": "SIMPLE",
+                "description": "Changes the message status to deleted",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "PROCESSED",
+                        "status": "DELETED",
+                        "statusComment": "Message deleted by user",
+                        "exitWorkflow": false
+                    }
+                ]
+            },
+            {
+                "name": "RETURN MESSAGE",
+                "actionType": "SIMPLE",
+                "description": "Changes the message status to rejected",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "PROCESSED",
+                        "status": "RETURNED",
+                        "statusComment": "Message must be repaired",
+                        "exitWorkflow": false
+                    }
+                ]
+            },
+            {
+                "name": "PROCESS ACK/NAK",
+                "actionType": "ACK_PROCESSOR",
+                "description": "Matches the ACK/NAK with the original sent messages and updates its status accordingly",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "NACKED",
+                        "status": "PROCESSED",
+                        "statusComment": "NAK notification matched OK",
+                        "relatedStatus": "NACKED",
+                        "relatedStatusComment": "Non-Acknowledge received",
+                        "exitWorkflow": false
+                    },
+                    {
+                        "resultKey": "ERROR",
+                        "status": "ERROR",
+                        "statusComment": "Transmission notification could not be matched with original sent message",
+                        "relatedStatus": "NACKED",
+                        "relatedStatusComment": "Non-Acknowledge received",
+                        "exitWorkflow": true
+                    },
+                    {
+                        "resultKey": "ACKED",
+                        "status": "PROCESSED",
+                        "statusComment": "ACK notification matched OK",
+                        "relatedStatus": "ACKED",
+                        "relatedStatusComment": "Acknowledge received",
+                        "exitWorkflow": false
+                    }
+                ]
+            },
+            {
+                "name": "PROCESS SYSTEM MESSAGE",
+                "actionType": "SYSTEM_MESSAGE_PROCESSOR",
+                "description": "Matches the system message notification 010, 011, 012 or 019 with the original sent messages and updates its status accordingly",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "MATCHED",
+                        "status": "PROCESSED",
+                        "statusComment": "System message notification matched OK",
+                        "exitWorkflow": false
+                    },
+                    {
+                        "resultKey": "ERROR",
+                        "status": "ERROR",
+                        "statusComment": "System message notification could not be matched with original sent message",
+                        "exitWorkflow": true
+                    }
+                ]
+            },
+            {
+                "name": "TRANSLATE MESSAGE",
+                "actionType": "TRANSLATOR",
+                "description": "Translates the message into its MT/MX equivalence",
+                "parameters": {},
+                "postProcesses": [
+                    {
+                        "resultKey": "FAIL_PRECONDITION",
+                        "event": "SWIFT_MESSAGE_RETURNED",
+                        "exitWorkflow": false
+                    },
+                    {
+                        "resultKey": "TRANSLATED",
+                        "status": "PROCESSED",
+                        "statusComment": "Translated into MT/MX equivalent",
+                        "relatedStatus": "LOADED",
+                        "relatedStatusComment": "Created by automatic MT/MX Translation",
+                        "relatedEvent": "SWIFT_MESSAGE_LOADED",
+                        "exitWorkflow": false
+                    }
+                ]
+            }
+        ],
+        "ecaConditions": [
+            {
+                "name": "ALWAYS TRUE",
+                "description": "Condition without any filtering parameter",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": false,
+                "negatedOutgoingTimeframe": false,
+                "negatedServiceIdFilter": false,
+                "negatedCategoriesFilter": false,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            },
+            {
+                "name": "IS USER-TO-USER MT",
+                "description": "Message is a user-to-user MT (categories 1 to 9), sent or receiver",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "standardFilter": "MT",
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": false,
+                "negatedOutgoingTimeframe": false,
+                "serviceIdFilter": "_01",
+                "negatedServiceIdFilter": false,
+                "categoriesFilter": "0",
+                "negatedCategoriesFilter": true,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            },
+            {
+                "name": "IS INCOMING",
+                "description": "Message is MT/MX received to SWIFT",
+                "ioFilter": "incoming",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": false,
+                "negatedOutgoingTimeframe": false,
+                "negatedServiceIdFilter": false,
+                "negatedCategoriesFilter": false,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            },
+            {
+                "name": "IS OUTGOING",
+                "description": "Message is MT/MX sent to SWIFT",
+                "ioFilter": "outgoing",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": false,
+                "negatedOutgoingTimeframe": false,
+                "negatedServiceIdFilter": false,
+                "negatedCategoriesFilter": false,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            },
+            {
+                "name": "IS MT ACK/NAK",
+                "description": "Messages is an MT ACK/NAK system message",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "standardFilter": "MT",
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": false,
+                "negatedOutgoingTimeframe": false,
+                "serviceIdFilter": "_21",
+                "negatedServiceIdFilter": false,
+                "negatedCategoriesFilter": false,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            },
+            {
+                "name": "IS MT SYSTEM MESSAGE",
+                "description": "Messages is a received MT system message (category 0)",
+                "ioFilter": "incoming",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "standardFilter": "MT",
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": false,
+                "negatedOutgoingTimeframe": false,
+                "negatedServiceIdFilter": false,
+                "categoriesFilter": "0",
+                "negatedCategoriesFilter": false,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            },
+            {
+                "name": "REQUIRES AUTHORIZATION",
+                "description": "Message require authorization",
+                "ioFilter": "outgoing",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": false,
+                "negatedOutgoingTimeframe": false,
+                "negatedServiceIdFilter": false,
+                "negatedCategoriesFilter": false,
+                "fromAmountFilter": 10000.0,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            },
+            {
+                "name": "CAN BE AUTHORIZED",
+                "description": "Messages can be authorized by approver",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "statusFilter": "WAITING_AUTHORIZATION, ERROR",
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": true,
+                "negatedOutgoingTimeframe": false,
+                "negatedServiceIdFilter": false,
+                "negatedCategoriesFilter": false,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            },
+            {
+                "name": "CAN BE RETURNED",
+                "description": "Messages can be returned by approver",
+                "ioFilter": "outgoing",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "statusFilter": "WAITING_AUTHORIZATION, ERROR, REPAIRED, DUPLICATE",
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": true,
+                "negatedOutgoingTimeframe": false,
+                "negatedServiceIdFilter": false,
+                "negatedCategoriesFilter": false,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            },
+            {
+                "name": "CAN BE ABORTED",
+                "description": "Messages can be returned by approver",
+                "ioFilter": "outgoing",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "statusFilter": "WAITING_AUTHORIZATION, ERROR, REPAIRED, RETURNED, LOADED",
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": false,
+                "negatedOutgoingTimeframe": false,
+                "negatedServiceIdFilter": false,
+                "negatedCategoriesFilter": false,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            },
+            {
+                "name": "IS DUPLICATE",
+                "description": "Messages is a duplicate",
+                "negatedIoFilter": false,
+                "negatedSenderFilter": false,
+                "negatedReceiverFilter": false,
+                "statusFilter": "DUPLICATE",
+                "negatedStatusFilter": false,
+                "negatedMessageTypesFilter": false,
+                "negatedStandardFilter": false,
+                "incomingTimeframe": false,
+                "negatedIncomingTimeframe": false,
+                "outgoingTimeframe": false,
+                "negatedOutgoingTimeframe": false,
+                "negatedServiceIdFilter": false,
+                "negatedCategoriesFilter": false,
+                "negatedCurrencyFilter": false,
+                "fieldFilters": [],
+                "negatedTagFilter": false
+            }
+        ],
+        "ecaEvents": [
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_LOADED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_SERVICE_MESSAGE_LOADED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_CREATED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_AUTHORIZED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_CANCELED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_REPAIRED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_RETURNED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_VALIDATED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_VERIFIED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_ACCEPTED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_REJECTED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_MATCHED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_MISMATCHED"
+            },
+            {
+                "systemEvent": true,
+                "name": "SWIFT_MESSAGE_UNMATCHED"
+            },
+            {
+                "systemEvent": true,
+                "name": "TRANSLATION_REQUESTED"
+            }
+        ],
+        "ecaButtons": [
+            {
+                "name": "Return",
+                "description": "Return the message for repairing",
+                "active": true,
+                "event": {
+                    "name": "SWIFT_MESSAGE_RETURNED"
+                },
+                "condition": {
+                    "name": "CAN BE RETURNED"
+                },
+                "icon": "settings_backup_restore",
+                "highlighted": false
+            },
+            {
+                "name": "Abort",
+                "description": "Cancel the message processing",
+                "active": true,
+                "event": {
+                    "name": "SWIFT_MESSAGE_CANCELED"
+                },
+                "condition": {
+                    "name": "CAN BE ABORTED"
+                },
+                "icon": "delete",
+                "highlighted": false
+            },
+            {
+                "name": "Authorize",
+                "description": "Authorize the message",
+                "active": true,
+                "event": {
+                    "name": "SWIFT_MESSAGE_AUTHORIZED"
+                },
+                "condition": {
+                    "name": "CAN BE AUTHORIZED"
+                },
+                "icon": "check_circle",
+                "highlighted": true
+            },
+            {
+                "name": "Translate",
+                "description": "Translates the message to its MT/MX equivalent",
+                "active": true,
+                "event": {
+                    "name": "TRANSLATION_REQUESTED"
+                },
+                "condition": {
+                    "name": "ALWAYS TRUE"
+                },
+                "icon": "autorenew",
+                "highlighted": true
+            }
+        ],
+        "ecaRules": [
+            {
+                "orderKey": 1,
+                "event": {
+                    "name": "SWIFT_MESSAGE_CREATED"
+                },
+                "condition": {
+                    "name": "ALWAYS TRUE"
+                },
+                "action": {
+                    "name": "VALIDATE MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 2,
+                "event": {
+                    "name": "SWIFT_MESSAGE_CREATED"
+                },
+                "condition": {
+                    "name": "IS USER-TO-USER MT"
+                },
+                "action": {
+                    "name": "DUPLICATES CHECK"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 3,
+                "event": {
+                    "name": "SWIFT_MESSAGE_CREATED"
+                },
+                "condition": {
+                    "name": "REQUIRES AUTHORIZATION"
+                },
+                "action": {
+                    "name": "REQUEST AUTHORIZATION"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 4,
+                "event": {
+                    "name": "SWIFT_MESSAGE_CREATED"
+                },
+                "condition": {
+                    "name": "REQUIRES AUTHORIZATION"
+                },
+                "action": {
+                    "name": "FORWARD AS AUTHORIZED"
+                },
+                "active": true,
+                "negatedCondition": true
+            },
+            {
+                "orderKey": 5,
+                "event": {
+                    "name": "SWIFT_MESSAGE_AUTHORIZED"
+                },
+                "condition": {
+                    "name": "IS OUTGOING"
+                },
+                "action": {
+                    "name": "SEND MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 6,
+                "event": {
+                    "name": "SWIFT_MESSAGE_AUTHORIZED"
+                },
+                "condition": {
+                    "name": "IS INCOMING"
+                },
+                "action": {
+                    "name": "PROCESS RECEIVED"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 7,
+                "event": {
+                    "name": "SWIFT_MESSAGE_AUTHORIZED"
+                },
+                "condition": {
+                    "name": "IS USER-TO-USER MT"
+                },
+                "action": {
+                    "name": "CHAIN MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 8,
+                "event": {
+                    "name": "SWIFT_MESSAGE_AUTHORIZED"
+                },
+                "condition": {
+                    "name": "IS USER-TO-USER MT"
+                },
+                "action": {
+                    "name": "MATCH MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 9,
+                "event": {
+                    "name": "SWIFT_MESSAGE_REPAIRED"
+                },
+                "condition": {
+                    "name": "ALWAYS TRUE"
+                },
+                "action": {
+                    "name": "FORWARD AS CREATED"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 10,
+                "event": {
+                    "name": "SWIFT_SERVICE_MESSAGE_LOADED"
+                },
+                "condition": {
+                    "name": "IS MT ACK/NAK"
+                },
+                "action": {
+                    "name": "PROCESS ACK/NAK"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 11,
+                "event": {
+                    "name": "SWIFT_MESSAGE_LOADED"
+                },
+                "condition": {
+                    "name": "IS MT SYSTEM MESSAGE"
+                },
+                "action": {
+                    "name": "PROCESS SYSTEM MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 12,
+                "event": {
+                    "name": "SWIFT_MESSAGE_LOADED"
+                },
+                "condition": {
+                    "name": "IS USER-TO-USER MT"
+                },
+                "action": {
+                    "name": "DUPLICATES CHECK"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 13,
+                "event": {
+                    "name": "SWIFT_MESSAGE_LOADED"
+                },
+                "condition": {
+                    "name": "IS USER-TO-USER MT"
+                },
+                "action": {
+                    "name": "CHAIN MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 14,
+                "event": {
+                    "name": "SWIFT_MESSAGE_LOADED"
+                },
+                "condition": {
+                    "name": "IS USER-TO-USER MT"
+                },
+                "action": {
+                    "name": "MATCH MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 15,
+                "event": {
+                    "name": "SWIFT_MESSAGE_LOADED"
+                },
+                "condition": {
+                    "name": "IS INCOMING"
+                },
+                "action": {
+                    "name": "PROCESS RECEIVED"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 16,
+                "event": {
+                    "name": "SWIFT_MESSAGE_LOADED"
+                },
+                "condition": {
+                    "name": "IS OUTGOING"
+                },
+                "action": {
+                    "name": "PROCESS SENT ACTION"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 17,
+                "event": {
+                    "name": "SWIFT_MESSAGE_CANCELED"
+                },
+                "condition": {
+                    "name": "IS OUTGOING"
+                },
+                "action": {
+                    "name": "ABORT MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 18,
+                "event": {
+                    "name": "SWIFT_MESSAGE_RETURNED"
+                },
+                "condition": {
+                    "name": "IS OUTGOING"
+                },
+                "action": {
+                    "name": "RETURN MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 19,
+                "event": {
+                    "name": "SWIFT_MESSAGE_ACCEPTED"
+                },
+                "condition": {
+                    "name": "REQUIRES AUTHORIZATION"
+                },
+                "action": {
+                    "name": "REQUEST AUTHORIZATION"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 20,
+                "event": {
+                    "name": "SWIFT_MESSAGE_ACCEPTED"
+                },
+                "condition": {
+                    "name": "REQUIRES AUTHORIZATION"
+                },
+                "action": {
+                    "name": "FORWARD AS AUTHORIZED"
+                },
+                "active": true,
+                "negatedCondition": true
+            },
+            {
+                "orderKey": 21,
+                "event": {
+                    "name": "SWIFT_MESSAGE_REJECTED"
+                },
+                "condition": {
+                    "name": "ALWAYS TRUE"
+                },
+                "action": {
+                    "name": "ABORT MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            },
+            {
+                "orderKey": 22,
+                "event": {
+                    "name": "TRANSLATION_REQUESTED"
+                },
+                "condition": {
+                    "name": "ALWAYS TRUE"
+                },
+                "action": {
+                    "name": "TRANSLATE MESSAGE"
+                },
+                "active": true,
+                "negatedCondition": false
+            }
+        ],
+        "groups": [
+            {
+                "name": "approver",
+                "buttons": [
+                    {
+                        "name": "Return"
+                    },
+                    {
+                        "name": "Abort"
+                    },
+                    {
+                        "name": "Translate"
+                    },
+                    {
+                        "name": "Authorize"
+                    }
+                ]
+            },
+            {
+                "name": "all_except_users",
+                "buttons": [
+                    {
+                        "name": "Return"
+                    },
+                    {
+                        "name": "Abort"
+                    },
+                    {
+                        "name": "Translate"
+                    },
+                    {
+                        "name": "Authorize"
+                    }
+                ]
+            },
+            {
+                "name": "administrator",
+                "buttons": [
+                    {
+                        "name": "Return"
+                    },
+                    {
+                        "name": "Abort"
+                    },
+                    {
+                        "name": "Translate"
+                    },
+                    {
+                        "name": "Authorize"
+                    }
+                ]
+            }
+        ]
+    }
+}

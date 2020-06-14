@@ -1,0 +1,133 @@
+package com.prowidesoftware.swift.enterprise.security;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.tinyradius.packet.RadiusPacket;
+import org.tinyradius.util.RadiusException;
+
+import java.io.IOException;
+import java.util.Properties;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@ExtendWith(SpringExtension.class)
+@ActiveProfiles("test")
+public class RadiusStubTest {
+
+    @TestConfiguration
+    static class TestContextConfiguration {
+
+        @Bean
+        public static PropertySourcesPlaceholderConfigurer properties() throws Exception {
+            PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer = new PropertySourcesPlaceholderConfigurer();
+
+            Properties properties = new Properties();
+            properties.setProperty("prowide.radius.enabled", "true");
+            properties.setProperty("prowide.radius.server.ip", "192.168.1.12");
+            properties.setProperty("prowide.radius.server.port", "1812");
+            properties.setProperty("prowide.radius.server.password", "SECRET");
+            properties.setProperty("prowide.radius.server.timeout", "500");
+            properties.setProperty("logging.level.root", "WARN");
+            properties.setProperty("logging.level.org.tinyradius", "TRACE");
+
+
+            propertySourcesPlaceholderConfigurer.setProperties(properties);
+            return propertySourcesPlaceholderConfigurer;
+        }
+
+        @Bean
+        public static RadiusStub createRadiusStub() {
+            return new RadiusStub();
+        }
+    }
+
+    @Autowired
+    private RadiusStub radiusStub;
+
+    @Test
+    @Disabled("Not finished")
+    public void authenticateTest() throws IOException, RadiusException {
+
+        RadiusPacket radiusPacket = radiusStub.authenticate("user01", "password");
+        assertTrue(radiusPacket.getPacketType() == RadiusPacket.ACCESS_ACCEPT);
+    }
+}
+
+
+package com.prowidesoftware.swift.enterprise.security;
+
+import com.prowidesoftware.swift.enterprise.service.usermanager.User;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(SpringExtension.class)
+@ActiveProfiles("test")
+public class EnterpriseAuthenticationProviderTest {
+
+    @MockBean
+    private EnterpriseAuthenticationProvider enterpriseAuthenticationProvider;
+
+    @Test
+    public void testAuthenticateOK() {
+
+        // Define Return Types
+        User user = new User();
+        user.setUsername("admin");
+        user.setPassword(new BCryptPasswordEncoder().encode("abc"));
+        user.setBlocked(false);
+        user.setDeleted(false);
+        user.setMustChangePassword(false);
+        user.setGroups(new HashSet<>());
+
+        EnterpriseUserPrincipal enterpriseUserPrincipal = new EnterpriseUserPrincipal(user);
+
+        Collection<? extends GrantedAuthority> grantedAuthorities = new ArrayList<>();
+        Authentication postAuthentication = new UsernamePasswordAuthenticationToken(enterpriseUserPrincipal, "abc", grantedAuthorities);
+
+        // Define When Conditions
+        Authentication preAuthentication =
+                new UsernamePasswordAuthenticationToken("admin", "abc");
+        when(enterpriseAuthenticationProvider.authenticate(preAuthentication)).thenReturn(postAuthentication);
+
+        Authentication realPostAuthentication = enterpriseAuthenticationProvider.authenticate(preAuthentication);
+
+        assertTrue(realPostAuthentication.getPrincipal() instanceof EnterpriseUserPrincipal);
+    }
+
+    @Test
+    public void testAuthenticateBadCredentials() {
+        Assertions.assertThrows(BadCredentialsException.class, () -> {
+            Authentication preAuthentication =
+                    new UsernamePasswordAuthenticationToken("admin", "123");
+            when(enterpriseAuthenticationProvider.authenticate(preAuthentication)).thenThrow(new BadCredentialsException("Bad credentials"));
+
+            Authentication postAuthentication = enterpriseAuthenticationProvider.authenticate(preAuthentication);
+
+            assertTrue(postAuthentication.getPrincipal() instanceof EnterpriseUserPrincipal);
+        });
+    }
+}
+

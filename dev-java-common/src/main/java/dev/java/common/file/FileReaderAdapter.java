@@ -3,26 +3,31 @@
  */
 package dev.java.common.file;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
+import java.io.*;
 import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * The Class FileReaderAdapter.
  */
 public class FileReaderAdapter implements Iterable<String> {
 
-	/** The buffered reader. */
+	/**
+	 * The buffered reader.
+	 */
 	private BufferedReader bufferedReader;
 
-	/** The file iterator. */
+	/**
+	 * The file iterator.
+	 */
 	private final FileIterator fileIterator;
 
-	/** The file. */
+	/**
+	 * The file.
+	 */
 	private final File file;
+
+	private final byte[] content;
 
 	/**
 	 * Instantiates a new file reader adapter.
@@ -31,8 +36,15 @@ public class FileReaderAdapter implements Iterable<String> {
 	 */
 	public FileReaderAdapter(File file) {
 
+		this.content = null;
 		this.file = file;
 		this.fileIterator = new FileIterator();
+	}
+
+	public FileReaderAdapter(byte[] content) {
+		this.file = null;
+		this.fileIterator = new FileIterator();
+		this.content = content;
 	}
 
 	/**
@@ -42,8 +54,13 @@ public class FileReaderAdapter implements Iterable<String> {
 	 */
 	public void open() throws Exception {
 
-		FileReader fileReader = new FileReader(file);
-		bufferedReader = new BufferedReader(fileReader);
+		if (!Objects.isNull(file)) {
+			bufferedReader = new BufferedReader(new FileReader(file));
+		}
+
+		if (!Objects.isNull(content)) {
+			bufferedReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(content)));
+		}
 	}
 
 	/**
@@ -70,14 +87,21 @@ public class FileReaderAdapter implements Iterable<String> {
 		boolean flag = false;
 		do {
 			try {
-
-				FileReader fileReader = new FileReader(file);
-				LineNumberReader reader = new LineNumberReader(fileReader);
-
-				while ((reader.readLine()) != null) {
+				Reader reader = null;
+				if (!Objects.isNull(file)) {
+					reader = new FileReader(file);
 				}
 
-				cont = reader.getLineNumber();
+				if (!Objects.isNull(content)) {
+					reader = new InputStreamReader(new ByteArrayInputStream(content));
+				}
+
+				LineNumberReader lineNumberReader = new LineNumberReader(reader);
+
+				while ((lineNumberReader.readLine()) != null) {
+				}
+
+				cont = lineNumberReader.getLineNumber();
 				reader.close();
 				flag = true;
 
@@ -117,7 +141,9 @@ public class FileReaderAdapter implements Iterable<String> {
 	 */
 	private class FileIterator implements Iterator<String> {
 
-		/** The current line. */
+		/**
+		 * The current line.
+		 */
 		private String currentLine;
 
 		/**

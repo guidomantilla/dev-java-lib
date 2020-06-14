@@ -1,0 +1,83 @@
+package com.prowidesoftware.swift.enterprise.security;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.ldap.core.LdapTemplate;
+import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import java.util.Collection;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class EnterpriseAuthenticationProvider implements AuthenticationProvider {
+
+    @Autowired
+    private LdapTemplate ldapTemplate;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Value("${prowide.ldap.enabled:false}")
+    private boolean ldapEnabled;
+
+    @Value("${prowide.ldap.base:prowide,dc=com}")
+    private String base;
+
+    @Value("${prowide.ldap.filter:(sn=:username)}")
+    private String filter;
+
+/*    @Value("${prowide.radius.enabled:false}")
+    private boolean radiusEnabled;
+
+    @Autowired
+    private RadiusStub radiusStub;*/
+
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+
+        String username = authentication.getName();
+        String password = authentication.getCredentials().toString();
+
+        EnterpriseUserPrincipal enterpriseUserPrincipal = (EnterpriseUserPrincipal) userDetailsService.loadUserByUsername(username);
+
+        if (ldapEnabled) {
+
+            boolean exists = ldapTemplate.authenticate(base, filter.replace(":username", username), password);
+            if (!exists) {
+                throw new BadCredentialsException("Bad credentials");
+            }
+
+        } else {
+
+            if (!passwordEncoder.matches(password, enterpriseUserPrincipal.getPassword())) {
+                throw new BadCredentialsException("Bad credentials");
+            }
+
+        }
+
+        new AccountStatusUserDetailsChecker().check(enterpriseUserPrincipal);
+
+        Collection<? extends GrantedAuthority> grantedAuthorities = enterpriseUserPrincipal.getAuthorities();
+        return new UsernamePasswordAuthenticationToken(enterpriseUserPrincipal, password, grantedAuthorities);
+    }
+
+    @Override
+    public boolean supports(Class<?> authentication) {
+        return authentication.equals(UsernamePasswordAuthenticationToken.class);
+    }
+}

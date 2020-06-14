@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -19,23 +20,29 @@ public class WebApiSecurityConfigAdapter extends WebSecurityConfigurerAdapter im
     private AuthenticationProvider authenticationProvider;
     private UserDetailsService userDetailsService;
     private PasswordEncoder passwordEncoder;
+    private String[] allowAntPatterns;
 
     public WebApiSecurityConfigAdapter() {
     }
 
-    public WebApiSecurityConfigAdapter(AuthenticationProvider authenticationProvider) {
+    public WebApiSecurityConfigAdapter(AuthenticationProvider authenticationProvider, String[] allowAntPatterns) {
         this.authenticationProvider = authenticationProvider;
+        this.allowAntPatterns = allowAntPatterns;
     }
 
-    public WebApiSecurityConfigAdapter(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+    public WebApiSecurityConfigAdapter(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder,
+                                       String[] allowAntPatterns) {
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
+        this.allowAntPatterns = allowAntPatterns;
     }
 
-    public WebApiSecurityConfigAdapter(AuthenticationProvider authenticationProvider, UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+    public WebApiSecurityConfigAdapter(AuthenticationProvider authenticationProvider, UserDetailsService userDetailsService,
+                                       PasswordEncoder passwordEncoder, String[] allowAntPatterns) {
         this.authenticationProvider = authenticationProvider;
         this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
+        this.allowAntPatterns = allowAntPatterns;
     }
 
     //----------------------------
@@ -76,7 +83,7 @@ public class WebApiSecurityConfigAdapter extends WebSecurityConfigurerAdapter im
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-        turnOnSecurity(http, "/", "/error", "/oauth/authorize");
+        turnOnApiSecurity(http, allowAntPatterns);
         sessionBehavior(http);
         errorHandling(http);
     }
@@ -85,7 +92,7 @@ public class WebApiSecurityConfigAdapter extends WebSecurityConfigurerAdapter im
     // End - WebSecurityConfigurerAdapter
     //----------------------------
 
-    public void turnOnSecurity(HttpSecurity http, String... allowAntPatterns) throws Exception {
+    public void turnOnApiSecurity(HttpSecurity http, String... allowAntPatterns) throws Exception {
 
         http.httpBasic();
         http.csrf().disable();
@@ -95,10 +102,20 @@ public class WebApiSecurityConfigAdapter extends WebSecurityConfigurerAdapter im
         http.authorizeRequests().anyRequest().authenticated();
     }
 
+    public void turnOnWebSecurity(HttpSecurity http, String... allowAntPatterns) throws Exception {
+
+        http.httpBasic();
+        http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+        http.cors();
+
+        http.authorizeRequests().antMatchers(allowAntPatterns).permitAll();
+        http.authorizeRequests().anyRequest().authenticated();
+    }
+
     public void turnOffSecurity(HttpSecurity http, String... allowAntPatterns) throws Exception {
 
         http.httpBasic().disable();
-        http.csrf();
+        http.csrf().disable();
         http.cors().disable();
 
         http.authorizeRequests().antMatchers(allowAntPatterns).permitAll();
