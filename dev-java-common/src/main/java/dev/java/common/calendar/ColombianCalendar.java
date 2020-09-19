@@ -16,12 +16,12 @@ public class ColombianCalendar {
     /**
      * The weekend calculator.
      */
-    private final dev.java.common.calendar.WeekendCalculator weekendCalculator;
+    private final WeekendCalculator weekendCalculator;
 
     /**
      * The holiday calcutator.
      */
-    private final dev.java.common.calendar.HolidayCalcutator holidayCalcutator;
+    private final HolidayCalcutator holidayCalcutator;
 
     /**
      * The formatter.
@@ -32,8 +32,8 @@ public class ColombianCalendar {
      * Instantiates a new colombian calendar.
      */
     public ColombianCalendar() {
-        this.weekendCalculator = new dev.java.common.calendar.WeekendCalculator();
-        this.holidayCalcutator = new dev.java.common.calendar.HolidayCalcutator();
+        this.weekendCalculator = new WeekendCalculator();
+        this.holidayCalcutator = new HolidayCalcutator();
         this.formatter = new SimpleDateFormat("yyyy-MM-dd");
     }
 

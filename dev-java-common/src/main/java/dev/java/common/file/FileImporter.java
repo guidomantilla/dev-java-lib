@@ -62,14 +62,12 @@ public class FileImporter<F> {
 
         int lineCount = fileReaderAdapter.retrieveNumberOfLines();
 
-
         F format = detectFormat(fileReaderAdapter.iterator());
         importFile(format, fileReaderAdapter.iterator(), lineCount, batchSize);
 
         Instant end = Instant.now();
 
         long time = Duration.between(start, end).toMillis();
-
 
         fileReaderAdapter.close();
     }
