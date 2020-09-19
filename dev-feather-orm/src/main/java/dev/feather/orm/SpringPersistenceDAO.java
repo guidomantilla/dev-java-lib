@@ -94,11 +94,6 @@ public abstract class SpringPersistenceDAO<E> extends AbstractPersistenceDAO<E> 
      * @return the list
      * @throws RuntimeException the runtime exception
      */
-    /*
-     * (non-Javadoc)
-     *
-     * @see ravenware.orm.AbstractPersistenceDAO#selectAll()
-     */
     @Override
     protected List<E> selectAll() throws RuntimeException {
 
@@ -161,12 +156,6 @@ public abstract class SpringPersistenceDAO<E> extends AbstractPersistenceDAO<E> 
      * @param whereParam the where param
      * @return the list
      * @throws RuntimeException the runtime exception
-     */
-    /*
-     * (non-Javadoc)
-     *
-     * @see ravenware.orm.AbstractPersistenceDAO#selectBy(java.lang.String,
-     * java.util.Map)
      */
     @Override
     protected List<E> selectBy(String sql, Map<String, Object> whereParam) throws RuntimeException {
@@ -232,11 +221,6 @@ public abstract class SpringPersistenceDAO<E> extends AbstractPersistenceDAO<E> 
      * @return the e
      * @throws RuntimeException the runtime exception
      */
-    /*
-     * (non-Javadoc)
-     *
-     * @see ravenware.orm.AbstractPersistenceDAO#selectByKey(java.util.Map)
-     */
     @Override
     protected E selectByKey(Map<String, Object> keyParam) throws RuntimeException {
 
@@ -269,12 +253,6 @@ public abstract class SpringPersistenceDAO<E> extends AbstractPersistenceDAO<E> 
      * @param whereParam the where param
      * @return the e
      * @throws RuntimeException the runtime exception
-     */
-    /*
-     * (non-Javadoc)
-     *
-     * @see ravenware.orm.AbstractPersistenceDAO#selectByUnique(java.lang.String,
-     * java.util.Map)
      */
     @Override
     protected E selectByUnique(String sql, Map<String, Object> whereParam) throws RuntimeException {
@@ -349,11 +327,6 @@ public abstract class SpringPersistenceDAO<E> extends AbstractPersistenceDAO<E> 
      * @return true, if successful
      * @throws RuntimeException the runtime exception
      */
-    /*
-     * (non-Javadoc)
-     *
-     * @see ravenware.orm.GenericPersistenceDAO#persist(java.lang.Object)
-     */
     @Override
     public boolean persist(E e) throws RuntimeException {
 
@@ -377,11 +350,6 @@ public abstract class SpringPersistenceDAO<E> extends AbstractPersistenceDAO<E> 
      * @return true, if successful
      * @throws RuntimeException the runtime exception
      */
-    /*
-     * (non-Javadoc)
-     *
-     * @see ravenware.orm.GenericPersistenceDAO#merge(java.lang.Object)
-     */
     @Override
     public boolean merge(E e) throws RuntimeException {
 
@@ -404,11 +372,6 @@ public abstract class SpringPersistenceDAO<E> extends AbstractPersistenceDAO<E> 
      * @param e the e
      * @return true, if successful
      * @throws RuntimeException the runtime exception
-     */
-    /*
-     * (non-Javadoc)
-     *
-     * @see ravenware.orm.GenericPersistenceDAO#delete(java.lang.Object)
      */
     @Override
     public boolean delete(E e) throws RuntimeException {

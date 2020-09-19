@@ -1,18 +1,15 @@
 package dev.feather.orm.reflection;
 
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import dev.feather.orm.annotation.Attribute;
 import dev.feather.orm.annotation.Entity;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.springframework.util.StringUtils;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The Class EntityReflectionHelper.
@@ -55,7 +52,7 @@ public class EntityReflectionHelper {
 
         Entity entity = ENTITY_MAP.get(clazz.getSimpleName());
 
-        if (entity == null) {
+        if (Objects.isNull(entity)) {
             entity = clazz.getAnnotation(Entity.class);
             ENTITY_MAP.put(clazz.getSimpleName(), entity);
         }
@@ -74,18 +71,12 @@ public class EntityReflectionHelper {
 
         List<Attribute> attributeList = KEY_LIST_MAP.get(clazz.getSimpleName());
 
-        if (attributeList == null) {
-            attributeList = new ArrayList<>(0);
+        if (Objects.isNull(attributeList)) {
 
             List<Attribute> attributeListTemp = retrieveAttributeList(clazz);
-
-            for (Attribute attribute : attributeListTemp) {
-
-                if (attribute.key()) {
-
-                    attributeList.add(attribute);
-                }
-            }
+            attributeList = attributeListTemp.stream()
+                    .filter(Attribute::key)
+                    .collect(Collectors.toList());
 
             KEY_LIST_MAP.put(clazz.getSimpleName(), attributeList);
         }
@@ -104,20 +95,12 @@ public class EntityReflectionHelper {
 
         List<Attribute> attributeList = ATTRIBUTTE_LIST_MAP.get(clazz.getSimpleName());
 
-        if (attributeList == null) {
-            attributeList = new ArrayList<>(0);
-
+        if (Objects.isNull(attributeList)) {
             List<Field> fieldList = _retrieveFieldList(clazz);
-
-            for (Field field : fieldList) {
-
-                Attribute attribute = field.getAnnotation(Attribute.class);
-
-                if (attribute != null) {
-
-                    attributeList.add(attribute);
-                }
-            }
+            attributeList = fieldList.stream()
+                    .map(field -> field.getAnnotation(Attribute.class))
+                    .filter(attribute -> !Objects.isNull(attribute))
+                    .collect(Collectors.toList());
 
             ATTRIBUTTE_LIST_MAP.put(clazz.getSimpleName(), attributeList);
         }
@@ -132,34 +115,7 @@ public class EntityReflectionHelper {
      * @return the list
      */
     public static <E> List<Method> retrieveGETMethodList(Class<E> clazz) {
-
-        List<Method> methodList = GET_METHOD_LIST_MAP.get(clazz.getSimpleName());
-
-        if (methodList == null) {
-
-            methodList = new ArrayList<>(0);
-
-            List<Field> fieldList = _retrieveFieldList(clazz);
-
-            for (Field field : fieldList) {
-
-                Attribute attribute = field.getAnnotation(Attribute.class);
-
-                if (attribute != null) {
-
-                    String name = "get" + StringUtils.capitalize(field.getName());
-                    Method method = MethodUtils.getAccessibleMethod(clazz, name, new Class[0]);
-
-                    if (method != null) {
-                        methodList.add(method);
-                    }
-                }
-            }
-
-            GET_METHOD_LIST_MAP.put(clazz.getSimpleName(), methodList);
-        }
-
-        return methodList;
+        return _retrieveXXXMethodList(clazz, "get", GET_METHOD_LIST_MAP);
     }
 
     /**
@@ -170,28 +126,36 @@ public class EntityReflectionHelper {
      * @return the list
      */
     public static <E> List<Method> retrieveSETMethodList(Class<E> clazz) {
+        return _retrieveXXXMethodList(clazz, "set", SET_METHOD_LIST_MAP);
+    }
 
-        List<Method> methodList = SET_METHOD_LIST_MAP.get(clazz.getSimpleName());
+    /**
+     * @param clazz
+     * @param xxxMethod
+     * @param methodMapHolder
+     * @param <E>
+     * @return
+     */
+    private static <E> List<Method> _retrieveXXXMethodList(Class<E> clazz, String xxxMethod, Map<String, List<Method>> methodMapHolder) {
 
-        if (methodList == null) {
-            methodList = new ArrayList<>(0);
+        List<Method> methodList = methodMapHolder.get(clazz.getSimpleName());
+
+        if (Objects.isNull(methodList)) {
 
             List<Field> fieldList = _retrieveFieldList(clazz);
+            methodList = fieldList.stream()
+                    .map(field -> {
+                        Attribute attribute = field.getAnnotation(Attribute.class);
+                        if (!Objects.isNull(attribute)) {
+                            String name = xxxMethod + StringUtils.capitalize(field.getName());
+                            return MethodUtils.getAccessibleMethod(clazz, name, field.getType());
+                        }
+                        return null;
+                    })
+                    .filter(method -> !Objects.isNull(method))
+                    .collect(Collectors.toList());
 
-            for (Field field : fieldList) {
-
-                Attribute attribute = field.getAnnotation(Attribute.class);
-
-                if (attribute != null) {
-
-                    String name = "set" + StringUtils.capitalize(field.getName());
-                    Method method = MethodUtils.getAccessibleMethod(clazz, name, field.getType());
-
-                    methodList.add(method);
-                }
-            }
-
-            SET_METHOD_LIST_MAP.put(clazz.getSimpleName(), methodList);
+            methodMapHolder.put(clazz.getSimpleName(), methodList);
         }
 
         return methodList;
@@ -207,7 +171,6 @@ public class EntityReflectionHelper {
     private static <E> List<Field> _retrieveFieldList(Class<E> clazz) {
 
         Field[] fieldArray = clazz.getDeclaredFields();
-
         return Arrays.asList(fieldArray);
     }
 }

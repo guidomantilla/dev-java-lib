@@ -1,5 +1,10 @@
 package dev.feather.orm.sql;
 
+import dev.feather.orm.annotation.Attribute;
+import dev.feather.orm.reflection.EntityReflectionHelper;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -14,11 +19,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import dev.feather.orm.annotation.Attribute;
-import dev.feather.orm.reflection.EntityReflectionHelper;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 
 /**
  * The Class EntityQueryHelper.
@@ -43,11 +43,11 @@ public class EntityQueryHelper {
 
             for (Method method : methodList) {
 
-                String name = StringUtils.uncapitalize(method.getName().substring(3, method.getName().length()));
+                String name = StringUtils.uncapitalize(method.getName().substring(3));
                 Field field = FieldUtils.getDeclaredField(e.getClass(), name, true);
                 Attribute attribute = field.getAnnotation(Attribute.class);
 
-                map.put(attribute.name(), method.invoke(e, new Object[]{}));
+                map.put(attribute.name(), method.invoke(e));
 
             }
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
@@ -68,7 +68,7 @@ public class EntityQueryHelper {
      */
     public static <E> E convert(Class<E> clazz, ResultSet resultSet) throws RuntimeException {
 
-        E e = null;
+        E e;
 
         try {
 
@@ -80,7 +80,7 @@ public class EntityQueryHelper {
 
                 Object value = null;
 
-                String fieldName = StringUtils.uncapitalize(method.getName().substring(3, method.getName().length()));
+                String fieldName = StringUtils.uncapitalize(method.getName().substring(3));
                 Field field = FieldUtils.getDeclaredField(e.getClass(), fieldName, true);
                 Attribute attribute = field.getAnnotation(Attribute.class);
 
@@ -135,9 +135,7 @@ public class EntityQueryHelper {
 
                     if (blob != null) {
                         int blobLength = (int) blob.length();
-                        byte[] blobAsBytes = blob.getBytes(1, blobLength);
-
-                        value = blobAsBytes;
+                        value = blob.getBytes(1, blobLength);
                         blob.free();
                     }
                 }
